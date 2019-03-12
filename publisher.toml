@@ -1,0 +1,7 @@
+server	= 	"tcp://127.0.0.1:1883"
+qos		=	0
+context	=	"telemetry/"
+topics	=	["light1", "switch2", "door3", "light2", "switch1", "room1/switch1", "room1/light1", "room2/switch2"]
+username =	""
+password =	""
+clientid = "publisher-test"

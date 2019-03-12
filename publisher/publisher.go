@@ -4,38 +4,39 @@ import (
 	"os"
 	"os/signal"
 	"time"
-	"flag"
 	"fmt"
+	"math/rand"
 	"syscall"
 	"crypto/tls"
+	"strconv"
 	
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	. "./conf"
 )
 
 func publishing(client MQTT.Client) {
 	timer := time.NewTicker(1 * time.Second)
 	for t := range timer.C {
-		topic_context := "telemetry/"
+		topic_context := Conf.TopicContext
 		
-		topic1 := topic_context + "light1"
-		client.Publish(topic1, 0, false, t.String())
-		
-		topic2 := topic_context + "light2"
-		client.Publish(topic2, 0, false, t.String())
-		
-		topic3 := topic_context + "light3"
-		client.Publish(topic3, 0, false, t.String())
+		i := rand.Intn(len(Conf.Topics))
+		topic := topic_context + Conf.Topics[i]
+		client.Publish(topic, 0, false, strconv.FormatInt(t.Unix(), 10))
+		rand.Seed(time.Now().Unix())
 	}
 }
 
 func main() {
+	//MQTT.DEBUG = log.New(os.Stdout, "", 0)
+	//MQTT.ERROR = log.New(os.Stdout, "", 0)
+	
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	
-	server := flag.String("server", "tcp://127.0.0.1:1883", "The full url of the MQTT server to connect to ex: tcp://127.0.0.1:1883")
-	clientid := "publisher-test";
+	server := Conf.Server
+	clientid := Conf.ClientId;
 	
-	connOpts := MQTT.NewClientOptions().AddBroker(*server).SetClientID(clientid).SetCleanSession(true)
+	connOpts := MQTT.NewClientOptions().AddBroker(server).SetClientID(clientid).SetCleanSession(true)
 	
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 	connOpts.SetTLSConfig(tlsConfig)
@@ -48,7 +49,7 @@ func main() {
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	} else {
-		fmt.Printf("Connected to %s\n", *server)
+		fmt.Printf("Connected to %s\n", server)
 	}
 	
 	<-c

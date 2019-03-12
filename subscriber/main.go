@@ -1,32 +1,24 @@
 package main
 
 import (
-	//"fmt"
+	"fmt"
+	"os"
+	"html/template"
 	"net/http"
-	_ "./mongo-db"
+	"./mongoDb"
+	"./conf"
 )
 
 func registry(wr http.ResponseWriter, req *http.Request) {
+	fmt.Println("On registry()")
 	
-	path := "static/img" + req.URL.Path
+	path := conf.Conf.Web.HtmlStatic
 	if file, err := os.Stat(path); err == nil && !file.IsDir() {
-		svg := template.Must(template.ParseFiles(path))
-	
-		data := struct {
-			Color string
-			Use   string
-		}{}
+		page := template.Must(template.ParseFiles(path))
+		
+		records := mongoDb.GetTelemetry()
 
-		color := req.URL.Query().Get("c")
-		if n := len(color); n != 0 && n < 7 {
-			data.Color = color
-		}
-		use := req.URL.Query().Get("u")
-		if len(use) != 0 {
-			data.Use = use
-		}
-
-		if err := svg.Execute(wr, data); err != nil {
+		if err := page.Execute(wr, records); err != nil {
 			http.Error(wr, err.Error(), http.StatusInternalServerError)
 		}
 		return
@@ -35,9 +27,9 @@ func registry(wr http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	http.Handle("/registry", registry)
+	http.HandleFunc(conf.Conf.Web.Context, registry)
 	
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":" + conf.Conf.Web.Port, nil); err != nil {
 		panic(err)
 	}
 }

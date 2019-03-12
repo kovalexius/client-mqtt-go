@@ -1,0 +1,17 @@
+[web]
+context		=	"/registry"
+html_static =	"subscriber/static/html/registry.tpl"
+port		=	"8080"
+
+[mqtt]
+server	= 	"tcp://127.0.0.1:1883"
+qos		=	0
+topic	=	"telemetry/#"
+
+[mongoDb]
+url	=	"localhost"
+name = 	"mqtt_database"
+user =	"mqtt-owner"
+password =	"Test*123"
+port	=	"27017"
+
